@@ -5,7 +5,7 @@ GO
 SELECT
  FAR.PKstudent
 ,Grade
-,FAR.School_ID
+,SBS.School_ID
 ,FAR.SchoolName
 ,MeasurementScale
 ,GrowthMeasureYN
@@ -13,10 +13,9 @@ SELECT
 ,TestName
 ,TestRITScore
 INTO #tt_Grade_Join
-FROM Assessment_Results_QA FAR
-JOIN Student_by_School_QA SBS
+FROM Assessment_Results_QA_Fall FAR
+JOIN Student_by_School_QA_Fall SBS
 ON FAR.PKstudent = SBS.PKstudent
-AND FAR.School_ID = SBS.School_ID
 
 --SELECT * FROM #tt_Grade_Join
 --DROP TABLE #tt_Grade_Join
@@ -55,8 +54,9 @@ SELECT
 ,SUM(CASE WHEN F.GrowthMeasureYN = 1 AND F.TestType = 'Survey with Goals' AND F.TestName NOT LIKE '%Primary%' THEN 1 ELSE 0 END) AS N_valid_survey_with_goals
 ,SUM(CASE WHEN F.GrowthMeasureYN = 1 AND F.TestType = 'Survey' AND F.TestName NOT LIKE '%Primary%' THEN 1 ELSE 0 END) AS N_valid_survey
 ,SUM(CASE WHEN F.GrowthMeasureYN = 0 THEN 1 ELSE 0 END) AS N_invalid
-,AVG(TestRITScore) AS Average_RIT
+,AVG(CASE WHEN F.GrowthMeasureYN = 1 THEN TestRITScore ELSE NULL END) AS Average_RIT
 FROM #tt_Final F
+WHERE MeasurementScale IS NOT NULL
 
 GROUP BY 
  F.School_ID
@@ -68,10 +68,10 @@ GROUP BY
 ,F.Total_Students
 
 ORDER BY
-Display_Name,
-Grade,
-MeasurementScale,
-TestName
+ Display_Name
+,MeasurementScale
+,Grade
+,TestName
 
 DROP TABLE #tt_Grade_Join
 DROP TABLE #tt_Final
